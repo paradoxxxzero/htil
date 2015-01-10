@@ -1,4 +1,5 @@
 import sys
+from collections import OrderedDict
 
 
 class Root(object):
@@ -12,9 +13,29 @@ class Root(object):
 
 class Node(object):
     def __init__(self, name, indent, parent):
+        id = ''
+        cls = []
+
+        if '#' in name:
+            name, id = name.split('#')
+
+        if '.' in name:
+            parts = name.split('.')
+            name = parts[0]
+            cls.extend(parts[1:])
+
+        if '.' in id:
+            parts = id.split('.')
+            id = parts[0]
+            cls.extend(parts[1:])
+
+        self.attr = OrderedDict()
+        if id:
+            self.attr['id'] = id
+        if cls:
+            self.attr['class'] = ' '.join(cls)
         self.name = name
         self.indent = indent
-        self.attr = {}
         self.parent = parent
         self.nodes = []
 
@@ -55,8 +76,14 @@ class Htil(object):
 
     def read_until(self, until, bt=False):
         name = ''
-        while self.pos < len(self.source) - 1 and not until(self.char):
-            name += self.char
+        escape = False
+        while self.pos < len(self.source) - 1 and not (
+                until(self.char) and not escape):
+            if self.char != '\\' or escape:
+                name += self.char
+                escape = False
+            else:
+                escape = self.char == '\\'
             self.pos += 1
             self.char = self.source[self.pos]
         if bt:
@@ -90,22 +117,15 @@ class Htil(object):
                         self.node = self.node.parent
 
                 self.state = 'lf'
-            elif self.char.isalnum():
-                if self.state == 'lf':
-                    name = self.read_until(lambda c: not c.isalnum(), True)
-                    node = Node(name, self.indent, self.node)
-                    self.node.nodes.append(node)
-                    self.node = node
-                    self.state = 'tag'
-                elif self.state == 'tag':
-                    name = self.read_until(lambda c: c == '=')
-                    self.attr = name
-                    self.state = 'attr_key'
-                elif self.state == 'attr_key':
-                    name = self.read_until(lambda c: c == ' ', True)
-                    self.node.attr[self.attr] = name
-                    self.attr = None
-                    self.state = 'tag'
+            elif self.char == ':':
+                self.pos += 1
+                if self.pos == len(self.source):
+                    break
+                self.char = self.source[self.pos]
+                self.read_until(lambda c: c != ' ')
+                name = self.read_until(lambda c: c == '\n', True)
+                self.indent += self.file_indent
+                self.node.nodes.append(Leaf(name, self.indent))
             elif self.char in '\'"':
                 delim = self.char
                 self.pos += 1
@@ -117,6 +137,22 @@ class Htil(object):
                 else:
                     self.node.nodes.append(Leaf(name, self.indent))
                 self.state = 'tag'
+            else:
+                if self.state == 'lf':
+                    name = self.read_until(lambda c: c in ' \n:', True)
+                    node = Node(name, self.indent, self.node)
+                    self.node.nodes.append(node)
+                    self.node = node
+                    self.state = 'tag'
+                elif self.state == 'tag':
+                    name = self.read_until(lambda c: c == '=')
+                    self.attr = name
+                    self.state = 'attr_key'
+                elif self.state == 'attr_key':
+                    name = self.read_until(lambda c: c in ' \n', True)
+                    self.node.attr[self.attr] = name
+                    self.attr = None
+                    self.state = 'tag'
 
     def html(self):
         self.process()

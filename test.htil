@@ -8,10 +8,11 @@ html
       section.first
         article style="background: orangered" role="main"
           p
-            "My first article"
-        article style="background: red" role="main"
+            "My first \" article\\"
+        article.cls1#id.cls2 style="background: red" role=main
           p
-            "My first article"
             "Youi"
+            "Piiii"
             a href=http://google.fr
-              "Link"
+              "Link
+              Here"

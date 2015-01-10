@@ -1,0 +1,17 @@
+html
+  head
+    title: Mon titre
+    script
+
+  body
+    main#index
+      section.first
+        article style="background: orangered" role="main"
+          p
+            "My first article"
+        article style="background: red" role="main"
+          p
+            "My first article"
+            "Youi"
+            a href=http://google.fr
+              "Link"

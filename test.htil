@@ -8,7 +8,7 @@ html
       section.first
         article style="background: orangered" role="main"
           p
-            "My first \" article\\"
+            "My first article"
         article.cls1#id.cls2 style="background: red" role=main
           p
             "Youi"

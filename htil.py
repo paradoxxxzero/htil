@@ -1,18 +1,26 @@
 import sys
 from collections import OrderedDict
+from html.parser import HTMLParser
+import re
+
+white_spaces = re.compile(r'\s+')
 
 
 class Root(object):
     def __init__(self):
         self.nodes = []
 
-    def out(self):
+    def html(self, indent=2):
         for node in self.nodes:
-            node.out()
+            node.html(0, indent)
+
+    def htil(self, indent=2):
+        for node in self.nodes:
+            node.htil(0, indent)
 
 
 class Node(object):
-    def __init__(self, name, indent, parent):
+    def __init__(self, name, parent):
         id = ''
         cls = []
 
@@ -35,27 +43,45 @@ class Node(object):
         if cls:
             self.attr['class'] = ' '.join(cls)
         self.name = name
-        self.indent = indent
         self.parent = parent
         self.nodes = []
 
-    def out(self):
+    def html(self, level, indent):
         print('%s<%s%s>' % (
-            (self.indent * ' '),
+            (level * ' '),
             self.name, ''.join(
                 ' %s="%s"' % (k, v) for k, v in self.attr.items())))
         for node in self.nodes:
-            node.out()
-        print('%s</%s>' % ((self.indent * ' '), self.name))
+            node.html(level + indent, indent)
+        print('%s</%s>' % ((level * ' '), self.name))
+
+    def htil(self, level, indent):
+        tag = self.name
+        if self.attr.get('id', None):
+            tag = '%s#%s' % (tag, self.attr['id'])
+        if self.attr.get('class', None):
+            tag = '%s%s' % (tag, ''.join(
+                '.%s' % c for c in self.attr['class'].split(' ')))
+
+        print('%s%s%s' % (
+            (level * ' '),
+            tag, ''.join(
+                ' %s="%s"' % (k, v) for k, v in self.attr.items()
+                if k not in ('id', 'class')
+            )))
+        for node in self.nodes:
+            node.htil(level + indent, indent)
 
 
 class Leaf(object):
-    def __init__(self, text, indent):
-        self.indent = indent
+    def __init__(self, text):
         self.text = text
 
-    def out(self):
-        print((' ' * self.indent) + self.text)
+    def html(self, level, indent):
+        print((' ' * level) + self.text)
+
+    def htil(self, level, indent):
+        print((' ' * level) + '"%s"' % self.text)
 
 
 class Htil(object):
@@ -125,7 +151,7 @@ class Htil(object):
                 self.read_until(lambda c: c != ' ')
                 name = self.read_until(lambda c: c == '\n', True)
                 self.indent += self.file_indent
-                self.node.nodes.append(Leaf(name, self.indent))
+                self.node.nodes.append(Leaf(name))
             elif self.char in '\'"':
                 delim = self.char
                 self.pos += 1
@@ -135,12 +161,12 @@ class Htil(object):
                     self.node.attr[self.attr] = name
                     self.attr = None
                 else:
-                    self.node.nodes.append(Leaf(name, self.indent))
+                    self.node.nodes.append(Leaf(name))
                 self.state = 'tag'
             else:
                 if self.state == 'lf':
                     name = self.read_until(lambda c: c in ' \n:', True)
-                    node = Node(name, self.indent, self.node)
+                    node = Node(name, self.node)
                     self.node.nodes.append(node)
                     self.node = node
                     self.state = 'tag'
@@ -156,8 +182,39 @@ class Htil(object):
 
     def html(self):
         self.process()
-        self.root.out()
+        self.root.html()
+
+
+class Html(object):
+    def __init__(self, source):
+        self.root = Root()
+        self.source = source
+        self.node = self.root
+
+    def process(self):
+        html = self
+
+        class HtmlParser(HTMLParser):
+            def handle_starttag(self, tag, attrs):
+                node = Node(tag, html.node)
+                html.node.nodes.append(node)
+                html.node = node
+                html.node.attr = OrderedDict(attrs)
+
+            def handle_data(self, data):
+                data = data.strip(' \t\n\r')
+                if data:
+                    html.node.nodes.append(Leaf(data))
+
+            def handle_endtag(self, tag):
+                html.node = html.node.parent
+
+        HtmlParser().feed(self.source)
+
+    def htil(self):
+        self.process()
+        self.root.htil()
 
 
 with open(sys.argv[1], 'r') as f:
-    Htil(f.read()).html()
+    Html(f.read()).htil()

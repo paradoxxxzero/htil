@@ -1,10 +1,17 @@
 html
   head
-    title: Mon titre
+    title
+      "Mon titre"
+    meta name="keywords" content="htil html"
+    meta name="description" content="Htil test"
+    meta name="referrer" content="always"
     script
 
   body
     main#index
+
+      header
+        h1
       section.first
         article style="background: orangered" role="main"
           p
@@ -14,5 +21,12 @@ html
             "Youi"
             "Piiii"
             a href=http://google.fr
+
               "Link
               Here"
+      footer
+        h1
+          "Foot"
+
+    aside
+      "I'm aside"

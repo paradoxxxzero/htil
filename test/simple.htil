@@ -3,16 +3,15 @@ html
     title
       "Mon titre"
     script
-
   body
     main
       section
-        article class=lol role="main"
+        article.lol role="main"
           p
             "My first article"
         article role="main"
           p
-            "My first article"
-            "Youi"
+            "My first article
+            Youi"
             a href="http://google.fr"
               "Link"

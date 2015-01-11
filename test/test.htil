@@ -1,17 +1,18 @@
 html
+  // Head part
   head
-    title
+    title // Lol
       "Mon titre"
     meta name="keywords" content="htil html"
     meta name="description" content="Htil test"
     meta name="referrer" content="always"
     script
-        "alert(\"Coucou !\")"
+      "alert(\"Coucou !\")"
 
   body
     main#index
 
-      header
+      header data-top
         h1
       section.first
         article style="background: orangered" role="main"
@@ -21,7 +22,7 @@ html
           p
             "Youi"
             "Piiii"
-            a href=http://google.fr
+            a href=http://google.fr //lol=haha // Inner comment
 
               "Link
               Here"

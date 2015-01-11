@@ -5,7 +5,7 @@ from .util import void_tags
 class Root(object):
     def __init__(self):
         self.nodes = []
-        self.parent = self
+        self.parent = None
 
     def html(self, indent=2):
         return ''.join(node.html(0, indent) for node in self.nodes)
@@ -15,29 +15,9 @@ class Root(object):
 
 
 class Node(object):
-    def __init__(self, name, parent):
-        id = ''
-        cls = []
-
-        if '#' in name:
-            name, id = name.split('#')
-
-        if '.' in name:
-            parts = name.split('.')
-            name = parts[0]
-            cls.extend(parts[1:])
-
-        if '.' in id:
-            parts = id.split('.')
-            id = parts[0]
-            cls.extend(parts[1:])
-
-        self.attr = OrderedDict()
-        if id:
-            self.attr['id'] = id
-        if cls:
-            self.attr['class'] = ' '.join(cls)
+    def __init__(self, name, attrs, parent):
         self.name = name
+        self.attrs = attrs
         self.parent = parent
         self.nodes = []
 
@@ -46,7 +26,8 @@ class Node(object):
             ('%s<%s%s%s>\n' % (
                 level * ' ',
                 self.name,
-                ''.join(' %s="%s"' % (k, v) for k, v in self.attr.items()),
+                ''.join(' %s="%s"' % (k, v) if v is not None else ' %s' % k
+                        for k, v in self.attrs.items()),
                 ' /' if self.name in void_tags else ''),
              ''.join(
                  node.html(level + indent, indent)
@@ -65,30 +46,34 @@ class Node(object):
 
     def tag(self):
         tag = self.name
-        if self.attr.get('id', None):
-            tag = '%s#%s' % (tag, self.attr['id'])
-        if self.attr.get('class', None):
+        if self.attrs.get('id', None):
+            tag = '%s#%s' % (tag, self.attrs['id'])
+        if self.attrs.get('class', None):
             tag = '%s%s' % (tag, ''.join(
-                '.%s' % c for c in self.attr['class'].split(' ')))
+                '.%s' % c for c in self.attrs['class'].split(' ')))
         return '%s%s' % (tag, ''.join(
-            ' %s="%s"' % (k, v) for k, v in self.attr.items()
+            ' %s="%s"' % (k, v) if v is not None else ' %s' % k
+            for k, v in self.attrs.items()
             if k not in ('id', 'class')))
 
     def __repr__(self):
-        return self.tag()
+        return '<%s>' % self.tag()
 
 
 class Leaf(object):
-    def __init__(self, text, parent):
+    def __init__(self, data, parent):
         self.parent = parent
-        self.text = text
+        self.data = data
         self.nodes = ()
 
     def html(self, level, indent):
-        return '%s%s\n' % ((' ' * level), self.text)
+        return '%s%s\n' % ((' ' * level), self.data)
 
     def htil(self, level, indent):
         return '%s"%s"\n' % (
-            (' ' * level), self.text
+            (' ' * level), self.data
             .replace('\\', '\\\\')
             .replace('"', '\\"'))
+
+    def __repr__(self):
+        return '<%s data: %s>' % (repr(self.parent), self.data)

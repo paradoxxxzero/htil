@@ -1,3 +1,4 @@
+from urllib.request import urlopen
 import os
 from htil import to_htil, to_html
 
@@ -14,3 +15,15 @@ def test_test():
         source = i.read()
     assert to_htil(to_html(
         to_htil(to_html(source)))) == to_htil(to_html(source))
+
+
+def test_google():
+    with urlopen('http://google.com/') as s:
+        source = s.read().decode('latin-1')
+
+
+def test_reddit():
+    with urlopen('http://reddit.com/') as s:
+        source = s.read().decode('utf-8')
+    assert to_html(to_htil(
+        to_html(to_htil(source)))) == to_html(to_htil(source))

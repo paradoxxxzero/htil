@@ -88,4 +88,7 @@ class Leaf(object):
         return '%s%s\n' % ((' ' * level), self.text)
 
     def htil(self, level, indent):
-        return '%s"%s"\n' % ((' ' * level), self.text)
+        return '%s"%s"\n' % (
+            (' ' * level), self.text
+            .replace('\\', '\\\\')
+            .replace('"', '\\"'))

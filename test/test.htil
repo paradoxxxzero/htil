@@ -6,6 +6,7 @@ html
     meta name="description" content="Htil test"
     meta name="referrer" content="always"
     script
+        "alert(\"Coucou !\")"
 
   body
     main#index
